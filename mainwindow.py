@@ -55,6 +55,7 @@ class Ui_MainWindow(object):
         self.gridLayout_3.addWidget(self.cbW1B3, 3, 0, 1, 1)
         self.verticalLayout_2.addWidget(self.gbWing1)
         self.gbWing2 = QtWidgets.QGroupBox(self.frame_bosses)
+        self.gbWing2.setAlignment(QtCore.Qt.AlignCenter)
         self.gbWing2.setFlat(False)
         self.gbWing2.setCheckable(False)
         self.gbWing2.setObjectName("gbWing2")

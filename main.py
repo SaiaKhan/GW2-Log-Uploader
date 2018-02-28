@@ -14,8 +14,8 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
         for widget in self.frame_bosses.children():
             if isinstance(widget, QtWidgets.QGroupBox):
-                print(widget.objectName())
-                widget.setEnabled(True)
+                pass
+
 
 
 app = QtWidgets.QApplication(sys.argv)
