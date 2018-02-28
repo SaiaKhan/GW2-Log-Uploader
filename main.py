@@ -3,7 +3,7 @@ print("---------- Starting GW2 Log Uploader ----------")
 import sys
 from PyQt5 import QtWidgets, Qt, QtGui
 from mainwindow import Ui_MainWindow as MainWindow
-from log_uploader import log_uploader
+#from log_uploader import log_uploader
 
 
 class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
