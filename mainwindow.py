@@ -28,6 +28,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.frame_bosses)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.gbWing1 = ButtonGroupBox(self.frame_bosses)
+        self.gbWing1.setAlignment(QtCore.Qt.AlignCenter)
         self.gbWing1.setObjectName("gbWing1")
         self.gridLayout_3 = QtWidgets.QGridLayout(self.gbWing1)
         self.gridLayout_3.setObjectName("gridLayout_3")
@@ -322,4 +323,4 @@ class Ui_MainWindow(object):
         self.pushButton.setText(_translate("MainWindow", "PushButton"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
 
-from gui.buttongroupbox import ButtonGroupBox
+from buttongroupbox import ButtonGroupBox

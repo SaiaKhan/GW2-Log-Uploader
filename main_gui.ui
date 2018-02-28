@@ -45,6 +45,9 @@
           <property name="title">
            <string>Spirit Vale</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
           <layout class="QGridLayout" name="gridLayout_3">
            <item row="1" column="0">
             <widget class="QCheckBox" name="cbW1B1">
