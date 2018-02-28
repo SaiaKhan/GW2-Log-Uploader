@@ -14,8 +14,8 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
         for widget in self.frame_bosses.children():
             if isinstance(widget, QtWidgets.QGroupBox):
-                pass
-
+                print(widget.objectName())
+                #widget.setEnabled(True)
 
 
 app = QtWidgets.QApplication(sys.argv)
@@ -39,7 +39,8 @@ dark_palette.setColor(QtGui.QPalette.HighlightedText, Qt.QColor(0, 0, 0))
 app.setPalette(dark_palette)
 
 app.setStyleSheet("QToolTip { color: #ffffff; background-color: #2a82da; border: 1px solid white; }")
-
+#cb = app.clipboard()
+#cb.setText("test", mode = cb.Clipboard)
 
 
 Window = MyMainWindow()
