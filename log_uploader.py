@@ -4,21 +4,21 @@ import requests
 import json
 import glob
 import pyperclip
-
+import configparser
+import ast
 
 class log_uploader(object):
     def __init__(self):
+        self.config = configparser.ConfigParser()
+        self.config.read("options.ini")
         self.log_folder = os.path.join(os.path.expanduser("~"), "Documents",
                                      "Guild Wars 2", "addons", "arcdps",
                                      "arcdps.cbtlogs")
-        self.options = {"include_fails": True,
-                        "file_extentions": ["zip"]}
-        with open("data\\bosses.json") as f:
-            self.bosses = json.load(f)
+        self.bosses = self.config["bossids"]
 
         self.url = "https://dps.report/uploadContent"
-        self.fractals = ["Arkk", "Artsariiv", "Skorvald", "MAMA", "Ensolyss", "Nightmare"]
-        self.raids = ["Vale Guardian", "Gorseval", "Sabetha", "Slothasor", "Matthias", "Keep Construct", "Xera", "Cairn", "Mursaat Overseer", "Samarog", "Deimos", "Soulless Horror", "Dhuum"]
+        self.fractals = self.config["bosslists"]["fractals"]
+        self.raids = self.config["bosslists"]["raids"]
         self.response = []
 
 
@@ -54,7 +54,7 @@ class log_uploader(object):
 
     def make_dirlist(self, namelist):
         result = []
-        for name in namelist:
+        for name in ast.literal_eval(namelist):
             result.append(glob.glob(os.path.join(self.log_folder, name+"*"))[0])
         return result
 

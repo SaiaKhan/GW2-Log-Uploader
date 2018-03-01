@@ -4,6 +4,7 @@ import sys
 from PyQt5 import QtWidgets, Qt, QtGui
 from mainwindow import Ui_MainWindow as MainWindow
 #from log_uploader import log_uploader
+import configparser
 
 
 class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
@@ -11,6 +12,9 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
         print("Loaded UI!")
+
+        config = configparser.ConfigParser()
+        config.read("options.ini")
 
         for widget in self.frame_bosses.children():
             if isinstance(widget, QtWidgets.QGroupBox):
