@@ -79,6 +79,7 @@ class log_uploader(object):
     def parse_response(self, responses):
         result = """** %s ** \n""" % (datetime.datetime.now().strftime('%d/%m/%y %H:%M'))
         for r in responses:
+            #print(r["metadata"]["evtc"]["bossId"])
             result = result + self.bosses[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
         pyperclip.copy(result)
 
