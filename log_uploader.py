@@ -87,3 +87,7 @@ class log_uploader(object):
     def upload_test(self):
         files = self.make_filelist(self.make_dirlist(["Xera"]))
         self.upload_logs(files)
+
+    def upload_parts(self, parts):
+        """ Give this a list of parts, i.e. things from the bosslists section"""
+        pass
