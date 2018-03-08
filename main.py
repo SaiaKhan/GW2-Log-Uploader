@@ -7,6 +7,7 @@ from mainwindow import Ui_MainWindow as MainWindow
 import log_uploader
 import configparser
 import messages
+import datetime
 
 
 class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
@@ -15,17 +16,19 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.setupUi(self)
         print("Loaded UI!")
 
+        self.log_uploader = log_uploader.log_uploader()
+        self.messages = messages.cErrorDlg()
+
         self.config = configparser.ConfigParser()
         self.config.read("options.ini")
         self.style_ui()
         self.populate_treeview()
 
-        self.log_uploader = log_uploader.log_uploader()
-        self.messages = messages.cErrorDlg()
-
-
         # button connections
         self.pbUploadSelection.clicked.connect(self.upload_checked_items)
+        self.progressBarUpload.valueChanged.connect(self.progressBarUpload.updateLabelFormat)
+        self.pbCopyLatest.clicked.connect(self.copyResults)
+#        self.pbTest.clicked.connect(self.test123)
 
 
     def populate_treeview(self):
@@ -34,18 +37,14 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         for wing in data.keys():
             parent = QtWidgets.QTreeWidgetItem(self.treeWidget)
             parent.setText(0, wing)
-            parent.setText(1, "something something modify date")
             parent.setFlags(QtCore.Qt.ItemIsAutoTristate | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
             for boss in data[wing]:
                 child = QtWidgets.QTreeWidgetItem(parent)
                 child.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
                 child.setText(0, boss)
+                child.setText(1, self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=boss)[1]))
                 child.setCheckState(0, QtCore.Qt.Checked)
-
         self.treeWidget.expandAll()
-        c_width = round(self.treeWidget.width()/2)
-        self.treeWidget.setColumnWidth(0, c_width)
-        self.treeWidget.setColumnWidth(1, c_width)
 
 
     def make_bosslist(self):
@@ -55,7 +54,6 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
             child = root.child(childnum)
             for bossnum in range(child.childCount()):
                 if child.child(bossnum).checkState(0):
-                    #print(child.child(bossnum).text(0))
                     result.append(child.child(bossnum).text(0))
         return result
 
@@ -63,6 +61,8 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         bosses = self.make_bosslist()
         if len(bosses) > 0:
             self.log_uploader.upload_parts(bosses)
+            cb = app.clipboard()
+            cb.setText(self.log_uploader.formattedResponse, mode = cb.Clipboard)
         else:
             self.messages.informationMessage("Please select some bosses to upload!")
 
@@ -72,6 +72,23 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         treePalette = QtGui.QPalette()
         treePalette.setColor(QtGui.QPalette.Window, QtGui.QColor(85, 170, 255))
         self.treeWidget.setPalette(treePalette)
+        self.treeWidget.setCurrentItem(None, 0)
+        c_width = round(self.treeWidget.width()/3)
+        self.treeWidget.setColumnWidth(0, c_width*2)
+        self.treeWidget.setColumnWidth(1, c_width)
+
+
+        self.progressBarUpload.setTextVisible(False)
+        cutofftime = datetime.timedelta(hours=8)
+        self.dteCutoffDate.setDateTime(datetime.datetime.now()-cutofftime)
+
+        self.cbCustomList.addItems(self.config["bosslists"].keys())
+
+    def copyResults(self):
+        self.log_uploader.links
+
+    def test123(self):
+        pass
 
 
 app = QtWidgets.QApplication(sys.argv)

@@ -2,7 +2,6 @@ import os
 import datetime
 import requests
 import json
-import glob
 import pyperclip
 import configparser
 import ast
@@ -25,6 +24,10 @@ class log_uploader(object):
     def get_current_week_number(self):
         return datetime.datetime.now().isocalendar()[1]
 
+    def format_date(self, date):
+        if type(date) is float:
+            return datetime.datetime.fromtimestamp(date).strftime("%d/%m/%Y %H:%M")
+
 
     def upload_logs(self, filelist):
         result = []
@@ -38,8 +41,13 @@ class log_uploader(object):
         self.parse_response(result)
 
 
-    def get_latest_file(self, dir):
+    def get_latest_file(self, **kwargs):
         #print("searching directory: " + glob.glob(dir+"*")[0])
+        if "dir" in kwargs.keys():
+            dir = kwargs.get("dir")
+        if "boss" in kwargs.keys():
+            dir = os.path.join(self.log_folder, kwargs.get("boss"))
+        #print("checking folder: "+dir)
         max_ctime = 0
         for dirname, subdirs, files in os.walk(dir):
             for fname in files:
@@ -61,14 +69,14 @@ class log_uploader(object):
         else:
             names = []
         for name in names:
-            result.append(glob.glob(os.path.join(self.log_folder, name+"*"))[0])
+            result.append(os.path.join(self.log_folder, name))
         return result
 
 
     def make_filelist(self, dirlist):
         result = []
         for dir in dirlist:
-            result.append(os.path.join(dir, self.get_latest_file(dir)[0]))
+            result.append(os.path.join(dir, self.get_latest_file(dir=dir)[0]))
         return result
 
 
@@ -87,7 +95,7 @@ class log_uploader(object):
         for r in responses:
             #print(r["metadata"]["evtc"]["bossId"])
             result = result + self.bossIds[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
-        pyperclip.copy(result)
+        self.formattedResponse = result
 
 
     def upload_test(self):
