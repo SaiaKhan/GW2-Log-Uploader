@@ -5,6 +5,8 @@ __pycache__/
 gui/
 tests/
 test*.py
+*.bat
+*.lnk
 
 # C extensions
 *.so
