@@ -1,10 +1,13 @@
 print("---------- Starting GW2 Log Uploader ----------")
 
 import sys
+import ast
 from PyQt5 import QtWidgets, QtCore, QtGui, Qt
 from mainwindow import Ui_MainWindow as MainWindow
-#from log_uploader import log_uploader
+import log_uploader
 import configparser
+import messages
+import datetime
 
 
 class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
@@ -13,23 +16,24 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.setupUi(self)
         print("Loaded UI!")
 
-        config = configparser.ConfigParser()
-        self.options = config.read("options.ini")
+        self.log_uploader = log_uploader.log_uploader()
+        self.messages = messages.cErrorDlg()
 
+        self.config = configparser.ConfigParser()
+        self.config.read("options.ini")
+        self.style_ui()
         self.populate_treeview()
 
-        # This makes the checkbox border light-blue
-        treePalette = QtGui.QPalette()
-        treePalette.setColor(QtGui.QPalette.Window, QtGui.QColor(85, 170, 255))
-        self.treeWidget.setPalette(treePalette)
+        # button connections
+        self.pbUploadSelection.clicked.connect(self.upload_checked_items)
+        self.progressBarUpload.valueChanged.connect(self.progressBarUpload.updateLabelFormat)
+        self.pbCopyLatest.clicked.connect(self.copyResults)
+#        self.pbTest.clicked.connect(self.test123)
 
-        #for widget in self.frame_bosses.children():
-        #    if isinstance(widget, QtWidgets.QGroupBox):
-        #        print(widget.objectName())
 
     def populate_treeview(self):
         # load boss- and wingnames from the options file
-        data = {"Spirit Vale": ["VG", "Gorseval", "Sabetha"], "Hall of Chains": ["Soulless Horror", "Dhuum"]}
+        data = ast.literal_eval(self.config["bosslists"]["bosses"])
         for wing in data.keys():
             parent = QtWidgets.QTreeWidgetItem(self.treeWidget)
             parent.setText(0, wing)
@@ -38,7 +42,53 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                 child = QtWidgets.QTreeWidgetItem(parent)
                 child.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
                 child.setText(0, boss)
+                child.setText(1, self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=boss)[1]))
                 child.setCheckState(0, QtCore.Qt.Checked)
+        self.treeWidget.expandAll()
+
+
+    def make_bosslist(self):
+        root = self.treeWidget.invisibleRootItem()
+        result = []
+        for childnum in range(root.childCount()):
+            child = root.child(childnum)
+            for bossnum in range(child.childCount()):
+                if child.child(bossnum).checkState(0):
+                    result.append(child.child(bossnum).text(0))
+        return result
+
+    def upload_checked_items(self):
+        bosses = self.make_bosslist()
+        if len(bosses) > 0:
+            self.log_uploader.upload_parts(bosses)
+            cb = app.clipboard()
+            cb.setText(self.log_uploader.formattedResponse, mode = cb.Clipboard)
+        else:
+            self.messages.informationMessage("Please select some bosses to upload!")
+
+
+    def style_ui(self):
+        # This makes the checkbox border light-blue
+        treePalette = QtGui.QPalette()
+        treePalette.setColor(QtGui.QPalette.Window, QtGui.QColor(85, 170, 255))
+        self.treeWidget.setPalette(treePalette)
+        self.treeWidget.setCurrentItem(None, 0)
+        c_width = round(self.treeWidget.width()/3)
+        self.treeWidget.setColumnWidth(0, c_width*2)
+        self.treeWidget.setColumnWidth(1, c_width)
+
+
+        self.progressBarUpload.setTextVisible(False)
+        cutofftime = datetime.timedelta(hours=8)
+        self.dteCutoffDate.setDateTime(datetime.datetime.now()-cutofftime)
+
+        self.cbCustomList.addItems(self.config["bosslists"].keys())
+
+    def copyResults(self):
+        self.log_uploader.links
+
+    def test123(self):
+        pass
 
 
 app = QtWidgets.QApplication(sys.argv)
