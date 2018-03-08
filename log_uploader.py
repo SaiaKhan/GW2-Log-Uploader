@@ -2,23 +2,25 @@ import os
 import datetime
 import requests
 import json
-import pyperclip
+from PyQt5.QtCore import (pyqtSignal, QObject)
 import configparser
 import ast
 
-class log_uploader(object):
+class log_uploader(QObject):
+    uploaded_signal = pyqtSignal(int)
+
     def __init__(self):
+        super().__init__()
         self.config = configparser.ConfigParser()
         self.config.read("options.ini")
         self.log_folder = os.path.join(os.path.expanduser("~"), "Documents",
                                      "Guild Wars 2", "addons", "arcdps",
                                      "arcdps.cbtlogs")
         self.bossIds = self.config["bossids"]
-
+        self.formattedResponse = ""
         self.url = "https://dps.report/uploadContent"
         self.fractals = self.config["bosslists"]["fractals"]
         self.raids = self.config["bosslists"]["raids"]
-        self.response = []
 
 
     def get_current_week_number(self):
@@ -36,9 +38,10 @@ class log_uploader(object):
                 print("Starting upload for file: " + file)
                 r = requests.post(self.url, files={"file": f}, data={"json":1})
                 result.append(json.loads(r.content))
-                print("finished upload for file!")
-        self.response = result
+                #print("finished upload for file!")
+                self.uploaded_signal.emit(1)
         self.parse_response(result)
+        # might want to save the result to file or just keep in memory
 
 
     def get_latest_file(self, **kwargs):

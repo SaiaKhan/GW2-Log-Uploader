@@ -18,6 +18,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
         self.log_uploader = log_uploader.log_uploader()
         self.messages = messages.cErrorDlg()
+        self.cb = app.clipboard()
 
         self.config = configparser.ConfigParser()
         self.config.read("options.ini")
@@ -28,7 +29,8 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.pbUploadSelection.clicked.connect(self.upload_checked_items)
         self.progressBarUpload.valueChanged.connect(self.progressBarUpload.updateLabelFormat)
         self.pbCopyLatest.clicked.connect(self.copyResults)
-#        self.pbTest.clicked.connect(self.test123)
+        self.log_uploader.uploaded_signal.connect(self.update_progressbar)
+        #self.log_uploader.uploaded_signal.connect(self.on_upload)
 
 
     def populate_treeview(self):
@@ -59,10 +61,14 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
     def upload_checked_items(self):
         bosses = self.make_bosslist()
+        print("uploading {0} bosses".format(len(bosses)))
         if len(bosses) > 0:
+            self.progressBarUpload.setMinimum(0)
+            self.progressBarUpload.setMaximum(len(bosses))
+            self.progressBarUpload.setValue(0)
+            self.progressBarUpload.setTextVisible(True)
             self.log_uploader.upload_parts(bosses)
-            cb = app.clipboard()
-            cb.setText(self.log_uploader.formattedResponse, mode = cb.Clipboard)
+            self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
         else:
             self.messages.informationMessage("Please select some bosses to upload!")
 
@@ -85,10 +91,13 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.cbCustomList.addItems(self.config["bosslists"].keys())
 
     def copyResults(self):
-        self.log_uploader.links
+        if self.log_uploader.formattedResponse != "":
+            self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+        else:
+            self.messages.informationMessage("No logs were uploaded yet! Please upload some logs and try again!")
 
-    def test123(self):
-        pass
+    def update_progressbar(self):
+        self.progressBarUpload.setValue(self.progressBarUpload.value()+1)
 
 
 app = QtWidgets.QApplication(sys.argv)
@@ -108,6 +117,10 @@ dark_palette.setColor(QtGui.QPalette.BrightText, Qt.QColor(255, 0, 0))
 dark_palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
 dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
 dark_palette.setColor(QtGui.QPalette.HighlightedText, Qt.QColor(0, 0, 0))
+
+dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Button, QtGui.QColor(55, 0, 0))
+dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtGui.QColor(100, 100, 100))
+#dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Button, QtGui.QColor(25, 0, 0))
 
 #dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(142,45,197).lighter())
 dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(85, 170, 255).lighter())
