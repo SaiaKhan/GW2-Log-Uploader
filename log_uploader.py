@@ -14,7 +14,7 @@ class log_uploader(object):
         self.log_folder = os.path.join(os.path.expanduser("~"), "Documents",
                                      "Guild Wars 2", "addons", "arcdps",
                                      "arcdps.cbtlogs")
-        self.bosses = self.config["bossids"]
+        self.bossIds = self.config["bossids"]
 
         self.url = "https://dps.report/uploadContent"
         self.fractals = self.config["bosslists"]["fractals"]
@@ -49,12 +49,18 @@ class log_uploader(object):
                     max_ctime = ctime
                     #max_dir = dirname
                     max_file = fname
-        return os.path.join(max_file)#max_dir, max_file)
+        return [os.path.join(max_file), max_ctime]#max_dir, max_file)
 
 
     def make_dirlist(self, namelist):
         result = []
-        for name in ast.literal_eval(namelist):
+        if type(namelist) is str:
+            names = ast.literal_eval(namelist)
+        elif type(namelist) is list:
+            names = namelist
+        else:
+            names = []
+        for name in names:
             result.append(glob.glob(os.path.join(self.log_folder, name+"*"))[0])
         return result
 
@@ -62,7 +68,7 @@ class log_uploader(object):
     def make_filelist(self, dirlist):
         result = []
         for dir in dirlist:
-            result.append(os.path.join(dir, self.get_latest_file(dir)))
+            result.append(os.path.join(dir, self.get_latest_file(dir)[0]))
         return result
 
 
@@ -77,10 +83,10 @@ class log_uploader(object):
 
 
     def parse_response(self, responses):
-        result = """** %s ** \n""" % (datetime.datetime.now().strftime('%d/%m/%y %H:%M'))
+        result = """** %s ** \n""" % (datetime.datetime.now().strftime("%d/%m/%y %H:%M"))
         for r in responses:
             #print(r["metadata"]["evtc"]["bossId"])
-            result = result + self.bosses[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
+            result = result + self.bossIds[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
         pyperclip.copy(result)
 
 
@@ -90,4 +96,5 @@ class log_uploader(object):
 
     def upload_parts(self, parts):
         """ Give this a list of parts, i.e. things from the bosslists section"""
-        pass
+        files = self.make_filelist(self.make_dirlist(parts))
+        self.upload_logs(files)
