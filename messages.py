@@ -80,6 +80,10 @@ class cInputDlg(QtWidgets.QDialog):
 		if ok and item:
 			return str(item)
 
+	def getDirectoryDlg(self):
+		file = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
+		return file
+
 	def setOpenFileName(self):
 		options = QtWidgets.QFileDialog.Options()
 		options |= QtWidgets.QFileDialog.DontUseNativeDialog

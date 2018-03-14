@@ -2,6 +2,7 @@ print("---------- Starting GW2 Log Uploader ----------")
 
 import sys
 import ast
+import os
 from PyQt5 import QtWidgets, QtCore, QtGui, Qt
 from mainwindow import Ui_MainWindow as MainWindow
 import log_uploader
@@ -15,26 +16,36 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
         print("Loaded UI!")
+        self.logFolderExists = False
 
         self.log_uploader = log_uploader.log_uploader()
         self.messages = messages.cErrorDlg()
+        self.dialogs = messages.cInputDlg()
         self.cb = app.clipboard()
 
         self.config = configparser.ConfigParser()
         self.config.read("options.ini")
+        self.checkLogFolders()
         self.style_ui()
         self.populate_treeview()
+
 
         # button connections
         self.pbUploadSelection.clicked.connect(self.upload_checked_items)
         self.progressBarUpload.valueChanged.connect(self.progressBarUpload.updateLabelFormat)
         self.pbCopyLatest.clicked.connect(self.copyResults)
         self.log_uploader.uploaded_signal.connect(self.update_progressbar)
+        self.pbChooseFolder.clicked.connect(self.choose_log_folder)
+        self.pbRefresh.clicked.connect(self.populate_treeview)
+        self.pbTest.clicked.connect(self.find_bosses)
         #self.log_uploader.uploaded_signal.connect(self.on_upload)
 
 
     def populate_treeview(self):
         # load boss- and wingnames from the options file
+        self.treeWidget.clear()
+        # the data should not be read from the config file but rather be gained
+        # from crawling the subdirs of the chosen log directory
         data = ast.literal_eval(self.config["bosslists"]["bosses"])
         for wing in data.keys():
             parent = QtWidgets.QTreeWidgetItem(self.treeWidget)
@@ -44,8 +55,13 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                 child = QtWidgets.QTreeWidgetItem(parent)
                 child.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
                 child.setText(0, boss)
-                child.setText(1, self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=boss)[1]))
-                child.setCheckState(0, QtCore.Qt.Checked)
+                text = self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=boss)[1])
+                if text == 0:
+                    child.setCheckState(0, QtCore.Qt.Unchecked)
+                    child.setText(1, "No file found")
+                else:
+                    child.setCheckState(0, QtCore.Qt.Checked)
+                    child.setText(1, text)
         self.treeWidget.expandAll()
 
 
@@ -61,16 +77,19 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
     def upload_checked_items(self):
         bosses = self.make_bosslist()
-        print("uploading {0} bosses".format(len(bosses)))
-        if len(bosses) > 0:
-            self.progressBarUpload.setMinimum(0)
-            self.progressBarUpload.setMaximum(len(bosses))
-            self.progressBarUpload.setValue(0)
-            self.progressBarUpload.setTextVisible(True)
-            self.log_uploader.upload_parts(bosses)
-            self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+        #print("uploading {0} bosses".format(len(bosses)))
+        if self.logFolderExists:
+            if len(bosses) > 0:
+                self.progressBarUpload.setMinimum(0)
+                self.progressBarUpload.setMaximum(len(bosses))
+                self.progressBarUpload.setValue(0)
+                self.progressBarUpload.setTextVisible(True)
+                self.log_uploader.upload_parts(bosses)
+                self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+            else:
+                self.messages.informationMessage("Please select at least one boss to upload!")
         else:
-            self.messages.informationMessage("Please select some bosses to upload!")
+            self.messages.informationMessage("Please choose a log folder first!")
 
 
     def style_ui(self):
@@ -83,12 +102,17 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.treeWidget.setColumnWidth(0, c_width*2)
         self.treeWidget.setColumnWidth(1, c_width)
 
+        self.statusbar.setVisible(False)
+
 
         self.progressBarUpload.setTextVisible(False)
         cutofftime = datetime.timedelta(hours=8)
         self.dteCutoffDate.setDateTime(datetime.datetime.now()-cutofftime)
 
-        self.cbCustomList.addItems(self.config["bosslists"].keys())
+    def checkLogFolders(self):
+        self.log_uploader.log_folder = self.config["options"]["logfolder"]
+        if os.path.isdir(self.log_uploader.log_folder):
+            self.logFolderExists = True
 
     def copyResults(self):
         if self.log_uploader.formattedResponse != "":
@@ -99,6 +123,20 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
     def update_progressbar(self):
         self.progressBarUpload.setValue(self.progressBarUpload.value()+1)
 
+    def choose_log_folder(self):
+        self.log_uploader.log_folder = self.dialogs.getDirectoryDlg()
+        self.config["options"]["logfolder"] = self.log_uploader.log_folder
+        self.logFolderExists = True
+        with open("options.ini", "w") as c:
+            self.config.write(c)
+        self.populate_treeview()
+        return self.log_uploader.log_folder
+
+    def find_bosses(self):
+        """This walks through the log directory to find bosses"""
+        if os.path.isdir(self.log_uploader.log_folder):
+            for dirname, subdirs, files in os.walk(self.log_uploader.log_folder):
+                print(os.path.split(dirname)[-1])
 
 app = QtWidgets.QApplication(sys.argv)
 app.setStyle("fusion")

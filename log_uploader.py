@@ -13,9 +13,9 @@ class log_uploader(QObject):
         super().__init__()
         self.config = configparser.ConfigParser()
         self.config.read("options.ini")
-        self.log_folder = os.path.join(os.path.expanduser("~"), "Documents",
-                                     "Guild Wars 2", "addons", "arcdps",
-                                     "arcdps.cbtlogs")
+        #self.log_folder = os.path.join(os.path.expanduser("~"), "Documents",
+        #                             "Guild Wars 2", "addons", "arcdps",
+        #                             "arcdps.cbtlogs")
         self.bossIds = self.config["bossids"]
         self.formattedResponse = ""
         self.url = "https://dps.report/uploadContent"
@@ -29,6 +29,7 @@ class log_uploader(QObject):
     def format_date(self, date):
         if type(date) is float:
             return datetime.datetime.fromtimestamp(date).strftime("%d/%m/%Y %H:%M")
+        return date
 
 
     def upload_logs(self, filelist):
@@ -52,6 +53,7 @@ class log_uploader(QObject):
             dir = os.path.join(self.log_folder, kwargs.get("boss"))
         #print("checking folder: "+dir)
         max_ctime = 0
+        max_file = "NOT FOUND"
         for dirname, subdirs, files in os.walk(dir):
             for fname in files:
                 full_path = os.path.join(dirname, fname)
@@ -60,7 +62,10 @@ class log_uploader(QObject):
                     max_ctime = ctime
                     #max_dir = dirname
                     max_file = fname
-        return [os.path.join(max_file), max_ctime]#max_dir, max_file)
+        if max_file == "NOT FOUND":
+            return [max_file, 0]
+        else:
+            return [os.path.join(max_file), max_ctime]
 
 
     def make_dirlist(self, namelist):
@@ -109,3 +114,8 @@ class log_uploader(QObject):
         """ Give this a list of parts, i.e. things from the bosslists section"""
         files = self.make_filelist(self.make_dirlist(parts))
         self.upload_logs(files)
+
+class cRaid(QObject):
+    def __init__(self, name, bosses):
+        self.name = name
+        self.bosses = bosses
