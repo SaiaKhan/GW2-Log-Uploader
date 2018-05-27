@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 gui/
 tests/
+temp/
 test*.py
 *.bat
 *.lnk

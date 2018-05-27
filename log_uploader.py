@@ -5,6 +5,7 @@ import json
 from PyQt5.QtCore import (pyqtSignal, QObject)
 import configparser
 import ast
+import webhook
 
 class log_uploader(QObject):
     uploaded_signal = pyqtSignal(int)
@@ -100,11 +101,20 @@ class log_uploader(QObject):
 
     def parse_response(self, responses):
         result = """** %s ** \n""" % (datetime.datetime.now().strftime("%d/%m/%y %H:%M"))
+        res = {}
+        rc = webhook.cRaidclear(datetime.datetime.now().strftime("%d/%m/%Y"))
         for r in responses:
             #print(r["metadata"]["evtc"]["bossId"])
-            result = result + self.bossIds[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
-        self.formattedResponse = result
+            res[self.bossIds[str(r["metadata"]["evtc"]["bossId"])]] = r["permalink"]
+            #result = result + self.bossIds[str(r["metadata"]["evtc"]["bossId"])] + ": " + r["permalink"] + "\n"
+        #self.formattedResponse = result
+        rc.set_bosses(res)
+        rc.add_bossfields()
+        rc.post_to_discord()
 
+    def test_message(self):
+        temp = webhook.cRaidclear(datetime.datetime.now().strftime("%d/%m/%Y"))
+        temp.test_message()
 
     def upload_test(self):
         files = self.make_filelist(self.make_dirlist(["Xera"]))

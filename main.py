@@ -28,6 +28,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.checkLogFolders()
         self.style_ui()
         self.populate_treeview()
+        self.populate_channel_combobox()
 
 
         # button connections
@@ -37,7 +38,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.log_uploader.uploaded_signal.connect(self.update_progressbar)
         self.pbChooseFolder.clicked.connect(self.choose_log_folder)
         self.pbRefresh.clicked.connect(self.populate_treeview)
-        self.pbTest.clicked.connect(self.find_bosses)
+        #self.pbTest.clicked.connect(self.send_test_message)
         #self.log_uploader.uploaded_signal.connect(self.on_upload)
 
 
@@ -64,6 +65,12 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                     child.setText(1, text)
         self.treeWidget.expandAll()
 
+    def populate_channel_combobox(self):
+        pass
+
+    def send_test_message(self):
+        self.log_uploader.test_message()
+
 
     def make_bosslist(self):
         root = self.treeWidget.invisibleRootItem()
@@ -85,7 +92,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                 self.progressBarUpload.setValue(0)
                 self.progressBarUpload.setTextVisible(True)
                 self.log_uploader.upload_parts(bosses)
-                self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+                #self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
             else:
                 self.messages.informationMessage("Please select at least one boss to upload!")
         else:
