@@ -36,8 +36,8 @@ class cRaidclear():
 
         #{"hook_url1":}
 
-        self.hook_url1 = "https://discordapp.com/api/webhooks/449753822038851606/pAgpZpm1WxGPc_t-UO94pEbz9AUmpYN9BjE7RVb0GZd3HhQZTS1JmNMXn_8VthAkaWBX" #this is the testserver
-        self.hook_url2 = "https://discordapp.com/api/webhooks/449702660568907777/QAA68ltV3vXKxWr5_FgSJln3K5QAciPn9dwEiv_ZTOD8IjhDQtHVdGhTOLLpdhgCT8-p" # this is the dps report channel
+        self.hook_url1 = "" #this is the testserver
+        self.hook_url2 = "" # this is the dps report channel
         self.hook_url = self.hook_url2
         self.embed = Webhook(self.hook_url, color=0x483768)
         self.embed.set_desc("__***[Meta] Raid Run on "+self.date+"***__")
@@ -62,7 +62,7 @@ class cRaidclear():
         test_message.add_field(name="This is a test!", value="Nothing to see here")
         test_message.set_desc("A very inconspicuous message")
         test_message.set_author(name="Rogue AI")
-        test_message.set_footer(text="", ts=False)
+        test_message.set_footer(text="This is the last test, I promise!", ts=False)
         test_message.post()
 
 
