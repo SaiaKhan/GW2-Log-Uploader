@@ -2,11 +2,11 @@ from discord_hooks import Webhook
 import datetime
 
 class cRaidclear():
-    def __init__(self, date=datetime.datetime.now().strftime("%d/%m/%Y")):
+    def __init__(self, hook_url, date=datetime.datetime.now().strftime("%d/%m/%Y")):
         self.bosses = {}
         self.date = date
         self.placeholder_icon = "<:FeelsDeadMan:446396105077424138>"
-        self.iconmap = {"Vale Guardian": "<:vale_guardian:449838205701718016>",
+        self.iconmap2 = {"Vale Guardian": "<:vale_guardian:449838205701718016>",
                         "Gorseval": "<:gorseval:449838206179868672>",
                         "Sabetha": "<:sabetha:449838205118971909>",
                         "Slothasor": "<:sloth:449838206045913098>",
@@ -20,25 +20,22 @@ class cRaidclear():
                         "Soulless Horror": "<:soulless_horror:449838201943621632>",
                         "Dhuum":"<:dhuum:449838200999903232>"}
 
-        self.iconmap2 = {"Vale Guardian": "<:vale_guardian:449831911993507850>",
-                        "Gorseval": "<:gorseval:449831912190771210>",
-                        "Sabetha": "<:sabetha:449831912006221824>",
-                        "Slothasor": "<:sloth:449831912064679946>",
-                        "Matthias": "<:matthias:449831912177926144>",
-                        "Keep Construct": "<:keep_construct:449831911674740737>",
-                        "Xera": "<:xera:449831911754432513>",
-                        "Cairn": "<:cairn:449831905186283551>",
-                        "Mursaat Overseer": "<:mursaat_overseer:449831912123400204>",
-                        "Samarog":"<:samarog:449831912526315520>",
-                        "Deimos": "<:deimos:449831906188591114>",
-                        "Soulless Horror": "<:soulless_horror:449831907509796878>",
-                        "Dhuum":"<:dhuum:449831907530899476>"}
+        self.iconmap = {"Vale Guardian": "<:vale_guardian:451069804426559509>",
+                        "Gorseval": "<:gorseval:451069805475135488>",
+                        "Sabetha": "<:sabetha:451069805101973507>",
+                        "Slothasor": "<:sloth:451069804720422913>",
+                        "Matthias": "<:matthias:451069804993052682>",
+                        "Keep Construct": "<:keep_construct:451069805475266570>",
+                        "Xera": "<:xera:451069805060161536>",
+                        "Cairn": "<:cairn:451069797116149761>",
+                        "Mursaat Overseer": "<:mursaat_overseer:451069804800114689>",
+                        "Samarog":"<:samarog:451069805764804608>",
+                        "Deimos": "<:deimos:451069798093422613>",
+                        "Soulless Horror": "<:soulless_horror:451069800123334675>",
+                        "Dhuum":"<:dhuum:451069799355645982>"}
 
-        #{"hook_url1":}
+        self.hook_url = hook_url
 
-        self.hook_url1 = "" #this is the testserver
-        self.hook_url2 = "" # this is the dps report channel
-        self.hook_url = self.hook_url2
         self.embed = Webhook(self.hook_url, color=0x483768)
         self.embed.set_desc("__***[Meta] Raid Run on "+self.date+"***__")
         self.embed.set_thumbnail("https://wiki.guildwars2.com/images/9/9d/Epidemic.png")
@@ -50,7 +47,10 @@ class cRaidclear():
 
     def add_bossfields(self):
         for key in self.bosses.keys():
+            # make sure that this gets the abbreviated names !!
             self.embed.add_field(name=self.iconmap.get(key, self.placeholder_icon)+key, value="[dps.report]("+self.bosses[key]+" \""+self.bosses[key]+"\")")
+            if self.iconmap.get(key, "whoops") == "Sabetha":
+                self.embed.add_field(name="", value="")
 
     def post_to_discord(self):
         #self.embed.set_desc("I am a descriptive description describing in a descriptive way.")

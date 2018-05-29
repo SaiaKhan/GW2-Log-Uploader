@@ -111,16 +111,12 @@ class Webhook:
 				embed["fields"].append(f)
 
 		data["embeds"].append(dict(embed))
-
 		empty = all(not d for d in data["embeds"])
-
 		if empty and 'content' not in data:
 			print('You cant post an empty payload.')
 		if empty: data['embeds'] = []
 
 		return json.dumps(data, indent=4)
-
-
 
 
 	def post(self):
@@ -129,7 +125,6 @@ class Webhook:
 		"""
 
 		headers = {'Content-Type': 'application/json'}
-
 		result = requests.post(self.url, data=self.json, headers=headers)
 
 		if result.status_code == 400:

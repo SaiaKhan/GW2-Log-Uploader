@@ -5,6 +5,7 @@ __pycache__/
 gui/
 tests/
 temp/
+options_raw.txt
 test*.py
 *.bat
 *.lnk

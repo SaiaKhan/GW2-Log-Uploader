@@ -1,12 +1,11 @@
 print("---------- Starting GW2 Log Uploader ----------")
 
 import sys
-import ast
+import json
 import os
 from PyQt5 import QtWidgets, QtCore, QtGui, Qt
 from mainwindow import Ui_MainWindow as MainWindow
 import log_uploader
-import configparser
 import messages
 import datetime
 
@@ -23,12 +22,13 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.dialogs = messages.cInputDlg()
         self.cb = app.clipboard()
 
-        self.config = configparser.ConfigParser()
-        self.config.read("options.ini")
+        with open("options.json") as f:
+            self.options = json.load(f)
+
         self.checkLogFolders()
         self.style_ui()
         self.populate_treeview()
-        self.populate_channel_combobox()
+        self.cbChannelSelect.addItems(list(self.options["hook_urls"].keys()))
 
 
         # button connections
@@ -38,35 +38,37 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.log_uploader.uploaded_signal.connect(self.update_progressbar)
         self.pbChooseFolder.clicked.connect(self.choose_log_folder)
         self.pbRefresh.clicked.connect(self.populate_treeview)
-        #self.pbTest.clicked.connect(self.send_test_message)
         #self.log_uploader.uploaded_signal.connect(self.on_upload)
 
 
     def populate_treeview(self):
-        # load boss- and wingnames from the options file
         self.treeWidget.clear()
-        # the data should not be read from the config file but rather be gained
-        # from crawling the subdirs of the chosen log directory
-        data = ast.literal_eval(self.config["bosslists"]["bosses"])
-        for wing in data.keys():
+        wing_data = self.log_uploader.get_wing_data()
+        # Go through the wing ids and create a node for each wing
+        for wing_id in wing_data.keys():
             parent = QtWidgets.QTreeWidgetItem(self.treeWidget)
-            parent.setText(0, wing)
-            parent.setFlags(QtCore.Qt.ItemIsAutoTristate | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEnabled)
-            for boss in data[wing]:
+            parent.setText(0, self.options["wings"].get(wing_id, "oops"))
+            parent.setFlags(QtCore.Qt.ItemIsAutoTristate\
+                          | QtCore.Qt.ItemIsUserCheckable\
+                          | QtCore.Qt.ItemIsEnabled)
+            # for the current wing, iterate through the bosses
+            # and create a child with the bossname
+            for boss_id in wing_data[wing_id].keys():
                 child = QtWidgets.QTreeWidgetItem(parent)
-                child.setFlags(QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable)
-                child.setText(0, boss)
-                text = self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=boss)[1])
+                child.setFlags(QtCore.Qt.ItemIsEnabled \
+                             | QtCore.Qt.ItemIsUserCheckable)
+                bossname = wing_data[wing_id].get(boss_id)
+                child.setText(0, self.log_uploader.convert_bossname(bossname))
+                text = self.log_uploader.format_date(self.log_uploader.get_latest_file(boss=bossname)[1])
                 if text == 0:
                     child.setCheckState(0, QtCore.Qt.Unchecked)
                     child.setText(1, "No file found")
+                    child.setText(2, boss_id)
                 else:
                     child.setCheckState(0, QtCore.Qt.Checked)
                     child.setText(1, text)
+                    child.setText(2, boss_id)
         self.treeWidget.expandAll()
-
-    def populate_channel_combobox(self):
-        pass
 
     def send_test_message(self):
         self.log_uploader.test_message()
@@ -79,7 +81,9 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
             child = root.child(childnum)
             for bossnum in range(child.childCount()):
                 if child.child(bossnum).checkState(0):
-                    result.append(child.child(bossnum).text(0))
+                    boss_id = child.child(bossnum).text(2)
+                    bossname = self.log_uploader.get_bossname_by_id(boss_id)
+                    result.append(bossname)
         return result
 
     def upload_checked_items(self):
@@ -91,8 +95,8 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                 self.progressBarUpload.setMaximum(len(bosses))
                 self.progressBarUpload.setValue(0)
                 self.progressBarUpload.setTextVisible(True)
-                self.log_uploader.upload_parts(bosses)
-                #self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+                self.log_uploader.upload_logs(bosses, self.options["hook_urls"].get(self.cbChannelSelect.itemText(self.cbChannelSelect.currentIndex())))
+                #self.cb.setText(self.log_uploader.formatted_response, mode = self.cb.Clipboard)
             else:
                 self.messages.informationMessage("Please select at least one boss to upload!")
         else:
@@ -108,6 +112,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         c_width = round(self.treeWidget.width()/3)
         self.treeWidget.setColumnWidth(0, c_width*2)
         self.treeWidget.setColumnWidth(1, c_width)
+        #self.treeWidget.hideColumn(2)
 
         self.statusbar.setVisible(False)
 
@@ -117,13 +122,13 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         self.dteCutoffDate.setDateTime(datetime.datetime.now()-cutofftime)
 
     def checkLogFolders(self):
-        self.log_uploader.log_folder = self.config["options"]["logfolder"]
+        self.log_uploader.log_folder = self.options.get("logfolder", "")
         if os.path.isdir(self.log_uploader.log_folder):
             self.logFolderExists = True
 
     def copyResults(self):
-        if self.log_uploader.formattedResponse != "":
-            self.cb.setText(self.log_uploader.formattedResponse, mode = self.cb.Clipboard)
+        if self.log_uploader.formatted_response != "":
+            self.cb.setText(self.log_uploader.formatted_response, mode = self.cb.Clipboard)
         else:
             self.messages.informationMessage("No logs were uploaded yet! Please upload some logs and try again!")
 
@@ -132,10 +137,10 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
 
     def choose_log_folder(self):
         self.log_uploader.log_folder = self.dialogs.getDirectoryDlg()
-        self.config["options"]["logfolder"] = self.log_uploader.log_folder
+        self.options["logfolder"] = self.log_uploader.log_folder
         self.logFolderExists = True
-        with open("options.ini", "w") as c:
-            self.config.write(c)
+        with open("options.json", "w") as f:
+            json.dump(self.options, f)
         self.populate_treeview()
         return self.log_uploader.log_folder
 
