@@ -3,7 +3,6 @@ import datetime
 import requests
 import json
 from PyQt5.QtCore import (pyqtSignal, QObject)
-#import ast
 import webhook
 
 class log_uploader(QObject):
@@ -13,11 +12,10 @@ class log_uploader(QObject):
         super().__init__()
         with open("options.json") as f:
             self.options = json.load(f)
-
+        #TO DO: get iconmaps from the options file aswell and select the right iconmap depending on the server selected
         temp = []
         for wing_id in self.options["bosses"]:
             temp.append(list(self.options["bosses"][wing_id].keys()))
-        #self.boss_ids = [id for wing in temp for id in wing]
         self.formatted_response = ""
         self.url = "https://dps.report/uploadContent"
         self.test = False
@@ -29,13 +27,6 @@ class log_uploader(QObject):
         if type(date) is float:
             return datetime.datetime.fromtimestamp(date).strftime("%d/%m/%Y %H:%M")
         return date
-
-    #def upload_parts(self, parts):
-        #""" Give this a list of parts, i.e. things from the bosslists section"""
-        # To Do: refactor upload_parts so that the hook_url doesnt have to be passed 3 times
-        #files = self.make_filelist(self.make_dirlist(parts))
-        #self.upload_logs(files)
-
 
     def upload_logs(self, parts, hook_url):
         if self.test:
@@ -61,21 +52,31 @@ class log_uploader(QObject):
     def parse_response(self, responses, hook_url):
         formatted_response = """** %s ** \n""" % (datetime.datetime.now().strftime("%d/%m/%y %H:%M"))
         rc = webhook.cRaidclear(hook_url)
-        #rc = webhook.cRaidclear(self.options["hook_urls"][])
         result = {}
         for r in responses:
             #print(r["metadata"]["evtc"]["bossId"])
             #result[self.boss_ids[int(r["metadata"]["evtc"]["bossId"])]] = r["permalink"]
             if "metadata" not in r.keys():
-                result[self.convert_bossname(self.get_bossname_by_id(r["evtc"]["bossId"]))] = r["permalink"]
+                #result[self.convert_bossname(self.get_bossname_by_id(r["evtc"]["bossId"]))] = r["permalink"]
+                result[r["evtc"]["bossId"]] = r["permalink"]
                 formatted_response = formatted_response + self.get_bossname_by_id(r["evtc"]["bossId"]) + ": " + r["permalink"] + "\n"
             else:
-                result[self.convert_bossname(self.get_bossname_by_id(r["metadata"]["evtc"]["bossId"]))] = r["permalink"]
+                #result[self.convert_bossname(self.get_bossname_by_id(r["metadata"]["evtc"]["bossId"]))] = r["permalink"]
+                result[r["metadata"]["evtc"]["bossId"]] = r["permalink"]
                 formatted_response = formatted_response + self.get_bossname_by_id(r["metadata"]["evtc"]["bossId"]) + ": " + r["permalink"] + "\n"
+
+        # This is the string for the clipboard
         self.formatted_response = formatted_response
-        rc.set_bosses(result) # make sure this receives the abbreviated boss names
-        rc.add_bossfields()
-        rc.post_to_discord()
+
+        # This sets up and sends the message for the chosen discord channel
+        #rc.set_bosses(result)
+        if not self.test:
+            rc.set_bosses(self.format_bosslist(result))
+            rc.setup_message()
+            rc.post_to_discord()
+        else:
+            rc.setup_message(test = True)
+            rc.post_to_discord()
 
 
     def get_latest_file(self, **kwargs):
@@ -83,7 +84,6 @@ class log_uploader(QObject):
             dir = kwargs.get("dir")
         if "boss" in kwargs.keys():
             dir = os.path.join(self.log_folder, kwargs.get("boss"))
-        #print("searching directory: " + glob.glob(dir+"*")[0])
         #print("checking folder: "+dir)
         max_ctime = 0
         max_file = "NOT FOUND"
@@ -104,7 +104,7 @@ class log_uploader(QObject):
     def make_dirlist(self, namelist):
         result = []
         if type(namelist) is str:
-            print("You fucked up and need type conversion. SHAME")#names = ast.literal_eval(namelist)
+            print("You fucked up and need type conversion. SHAME")
         elif type(namelist) is list:
             names = namelist
         else:
@@ -129,30 +129,45 @@ class log_uploader(QObject):
 
     def get_bossname_by_id(self, id):
         id=str(id)
-        #print("checking for id "+str(id)+" with type "+str(type(id)))
         for wing_id in self.options["bosses"]:
             for boss_id in self.options["bosses"][wing_id].keys():
                 if id == boss_id:
-                    #print("returning "+self.options["bosses"][wing_id][boss_id])
                     return self.options["bosses"][wing_id][boss_id]
-        #return "Boss could not be found"
 
-    #def upload_fractals(self):
-        #files = self.make_filelist(self.make_dirlist(self.fractals))
-        #self.upload_logs(files)
+    def test_message(self, url):
+        msg = webhook.cRaidclear(url)
+        testdata = {15429: "https://dps.report/F2Qr-20180528-205930_gorse",
+                    17194: "https://dps.report/8VG1-20180528-190433_cairn",
+                    17172: "https://dps.report/qyxl-20180528-190925_mo"}
+        bosses = self.format_bosslist(testdata)
+        msg.set_bosses(bosses)
+        msg.setup_message_new()
+        msg.post_to_discord()
 
+    def format_bosslist(self, data):
+        result = {}
+        altname=  True
+        for boss_id in data.keys():
+            wingname = self.get_wingname_by_boss_id(boss_id)
+            bossname = self.get_bossname_by_id(boss_id)
+            if altname:
+                bossname = self.convert_bossname(bossname)
+            if wingname not in result.keys():
+                result[wingname] = [{bossname: data[boss_id]}]
+            else:
+                result[wingname].append({bossname: data[boss_id]})
 
-    #def upload_raids(self):
-        #files = self.make_filelist(self.make_dirlist(self.raids))
-        #self.upload_logs(files)
+        return result
 
-    def test_message(self):
-        temp = webhook.cRaidclear(datetime.datetime.now().strftime("%d/%m/%Y"))
-        temp.test_message()
+    def wing_id_to_name(self, id):
+        id = str(id)
+        return self.options["wings"].get(id, "Unknown wing name for id "+id)
 
-
-
-
-    #def upload_test(self):
-        #files = self.make_filelist(self.make_dirlist(["Xera"]))
-        #self.upload_logs(files)
+    def get_wingname_by_boss_id(self, boss_id):
+        for wing_id in self.options["bosses"].keys():
+            #print("Checking wing with id "+wing_id)
+            #print("Wing containts these bosses:")
+            #print(self.options["bosses"][wing_id].keys() )
+            if str(boss_id) in self.options["bosses"][wing_id].keys():
+                #print("Found boss with id %s in wing with id %s" % (boss_id, wing_id))
+                return self.wing_id_to_name(wing_id)

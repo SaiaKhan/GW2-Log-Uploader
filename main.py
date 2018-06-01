@@ -70,10 +70,6 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
                     child.setText(2, boss_id)
         self.treeWidget.expandAll()
 
-    def send_test_message(self):
-        self.log_uploader.test_message()
-
-
     def make_bosslist(self):
         root = self.treeWidget.invisibleRootItem()
         result = []
@@ -112,7 +108,7 @@ class MyMainWindow(QtWidgets.QMainWindow, MainWindow):
         c_width = round(self.treeWidget.width()/3)
         self.treeWidget.setColumnWidth(0, c_width*2)
         self.treeWidget.setColumnWidth(1, c_width)
-        #self.treeWidget.hideColumn(2)
+        self.treeWidget.hideColumn(2)
 
         self.statusbar.setVisible(False)
 

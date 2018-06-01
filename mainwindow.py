@@ -11,6 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
+        MainWindow.setEnabled(True)
         MainWindow.resize(738, 560)
         MainWindow.setMinimumSize(QtCore.QSize(600, 510))
         MainWindow.setUnifiedTitleAndToolBarOnMac(False)
@@ -138,16 +139,22 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.fFooter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setEnabled(False)
+        self.menubar.setEnabled(True)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 738, 21))
         self.menubar.setObjectName("menubar")
         self.menuQuit = QtWidgets.QMenu(self.menubar)
         self.menuQuit.setObjectName("menuQuit")
+        self.menuTesting = QtWidgets.QMenu(self.menubar)
+        self.menuTesting.setObjectName("menuTesting")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.actionTest_Formatting = QtWidgets.QAction(MainWindow)
+        self.actionTest_Formatting.setObjectName("actionTest_Formatting")
+        self.menuTesting.addAction(self.actionTest_Formatting)
         self.menubar.addAction(self.menuQuit.menuAction())
+        self.menubar.addAction(self.menuTesting.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -193,6 +200,7 @@ class Ui_MainWindow(object):
         self.treeWidget.setSortingEnabled(__sortingEnabled)
         self.pbUploadSelection.setToolTip(_translate("MainWindow", "This posts the logs to the discord channel that is selected in the box below"))
         self.pbUploadSelection.setText(_translate("MainWindow", "upload and post selected logs"))
+        self.pbResendLogs.setToolTip(_translate("MainWindow", "<html><head/><body><p>Post the latest upload to the channel selected above</p></body></html>"))
         self.pbResendLogs.setText(_translate("MainWindow", "post last upload"))
         self.pbOpenLogs.setText(_translate("MainWindow", "open logs in browser"))
         self.pbCopyLatest.setText(_translate("MainWindow", "copy links to clipboard"))
@@ -204,5 +212,7 @@ class Ui_MainWindow(object):
         self.lUploadStatus.setText(_translate("MainWindow", "upload status"))
         self.progressBarUpload.setFormat(_translate("MainWindow", "%v of %m files uploaded"))
         self.menuQuit.setTitle(_translate("MainWindow", "Quit"))
+        self.menuTesting.setTitle(_translate("MainWindow", "Testing"))
+        self.actionTest_Formatting.setText(_translate("MainWindow", "Test Formatting"))
 
 from customProgressBar import customProgressBar
